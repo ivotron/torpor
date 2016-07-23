@@ -171,16 +171,19 @@ class TorporTuner(MeasurementInterface):
                 test_t = get_result(bench_t, test_b['name'])
 
                 speedup = float(test_t['result']) / float(test_b['result'])
+
+                if speedup < 1.0:
+                    # this is actually a slowdown. We reflect the speedup on 1.0
+                    # so we keep slowdowns in the same scale as speedups, e.g.
+                    # a speedup of 0.5 means is a slowdown of 2 (two times
+                    # slower), so we represent it as positive 2 instead since
+                    # keeping the magnitude is enough for the purposes of the
+                    # monotonic search.
+                    speedup = 1 / speedup
                 speedup_sum += speedup
                 count += 1
 
         speedup_mean = speedup_sum / count
-
-        if speedup_mean < 1.0:
-            # heuristic that reflects the speedup on 1.0 to prevent the
-            # optimization to minimize up to 0. E.g. instead of having
-            # a speedup of 0.952, we have a speedup of 1.048
-            speedup_mean = 1 + (1.0 - speedup_mean)
 
         return Result(time=speedup_mean)
 
